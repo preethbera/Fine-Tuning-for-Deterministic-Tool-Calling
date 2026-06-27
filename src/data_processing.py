@@ -1,4 +1,5 @@
 import json
+import sys
 from datasets import load_dataset
 from unsloth.chat_templates import get_chat_template
 
@@ -85,8 +86,14 @@ def prepare_dataset(dataset_name: str, tokenizer):
     """
     Streams the dataset via HF datasets and maps it to the unified format.
     """
-    dataset = load_dataset(dataset_name, split="train")
-    
+    try:
+        dataset = load_dataset(dataset_name, split="train")
+    except Exception as e:
+        print(f"\n[ERROR] Failed to load dataset '{dataset_name}'.")
+        print("Please check your internet connection. If you reverted to a gated dataset, ensure you have set your Hugging Face token.")
+        print(f"Original error: {e}")
+        sys.exit(1)
+        
     def formatting_prompts_func(examples):
         texts = []
         for query, tools, answers in zip(examples["query"], examples["tools"], examples["answers"]):

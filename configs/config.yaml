@@ -18,7 +18,7 @@ lora:
     - "down_proj"
 
 data:
-  dataset_name: "Salesforce/xlam-function-calling-60k"
+  dataset_name: "eitanturok/Salesforce-xlam-function-calling-60k"
 
 training:
   per_device_train_batch_size: 2
