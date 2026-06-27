@@ -67,6 +67,9 @@ class TrainingPipeline:
         last_checkpoint = None
         if os.path.isdir(self.config.training.output_dir):
             last_checkpoint = get_last_checkpoint(self.config.training.output_dir)
+            if last_checkpoint and not os.path.exists(os.path.join(last_checkpoint, "trainer_state.json")):
+                print(f"Warning: Corrupted checkpoint found at {last_checkpoint} (missing trainer_state.json). Starting fresh.")
+                last_checkpoint = None
             
         try:
             trainer.train(resume_from_checkpoint=last_checkpoint)
