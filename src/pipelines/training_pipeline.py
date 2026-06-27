@@ -31,6 +31,7 @@ class TrainingPipeline:
             
         os.makedirs(self.config.training.output_dir, exist_ok=True)
         os.makedirs(self.config.training.logging_dir, exist_ok=True)
+        os.environ["TENSORBOARD_LOGGING_DIR"] = self.config.training.logging_dir
         
         agent = RouterAgent(self.config)
         model, tokenizer = agent.initialize_model()
@@ -58,7 +59,6 @@ class TrainingPipeline:
                 lr_scheduler_type=self.config.training.lr_scheduler_type,
                 seed=self.config.training.seed,
                 output_dir=self.config.training.output_dir,
-                logging_dir=self.config.training.logging_dir,
                 report_to="tensorboard"
             ),
             callbacks=[DivergenceGuard()]
