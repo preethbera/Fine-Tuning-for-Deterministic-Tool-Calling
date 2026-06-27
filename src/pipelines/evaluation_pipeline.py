@@ -1,5 +1,6 @@
 import os
 import json
+import torch
 from datasets import load_dataset
 from tqdm import tqdm
 from src.core.config import AppConfig
@@ -73,9 +74,13 @@ class EvaluationPipeline:
                 return_tensors="pt",
             ).to("cuda")
             
+            attention_mask = torch.ones_like(inputs)
+            
             outputs = model.generate(
                 input_ids=inputs, 
+                attention_mask=attention_mask,
                 max_new_tokens=512, 
+                max_length=None,
                 use_cache=True, 
                 pad_token_id=tokenizer.eos_token_id
             )
