@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "deterministic_tool_router"
+version = "0.1.0"
+description = "A production-grade, highly modular LLM alignment repository for deterministic agentic tool routing."
+dependencies = [
+    "pydantic>=2.0",
+    "pyyaml",
+    "trl",
+    "peft",
+    "transformers",
+    "accelerate",
+    "xformers",
+    "datasets",
+    "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
+]
