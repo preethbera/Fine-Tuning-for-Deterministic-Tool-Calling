@@ -1,14 +1,24 @@
 from trl import SFTTrainer
-from transformers import TrainingArguments
+from transformers import TrainingArguments, TrainerCallback, TrainerState, TrainerControl
 from unsloth import is_bfloat16_supported
 from src.utils import ensure_dir
 import os
+import math
+
+class DivergenceGuard(TrainerCallback):
+    def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, logs=None, **kwargs):
+        if logs is not None and "loss" in logs:
+            loss = logs["loss"]
+            if math.isnan(loss) or math.isinf(loss):
+                print(f"\n[DIVERGENCE GUARD TRIGGERED] Invalid loss detected: {loss}. Halting training immediately to prevent corrupted weights.")
+                control.should_training_stop = True
 
 def setup_and_train(model, tokenizer, dataset, config):
     """
     Core training workflow using SFTTrainer with metrics and checkpointing.
     """
     ensure_dir(config.training.output_dir)
+    ensure_dir(config.training.logging_dir)
     
     trainer = SFTTrainer(
         model=model,
@@ -32,8 +42,10 @@ def setup_and_train(model, tokenizer, dataset, config):
             lr_scheduler_type=config.training.lr_scheduler_type,
             seed=config.training.seed,
             output_dir=config.training.output_dir,
-            report_to="none" # Disable wandb for basic Kaggle run, can be enabled via config later
+            logging_dir=config.training.logging_dir,
+            report_to="tensorboard"
         ),
+        callbacks=[DivergenceGuard()]
     )
     
     # Train the model

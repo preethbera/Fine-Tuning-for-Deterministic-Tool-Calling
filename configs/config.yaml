@@ -32,3 +32,4 @@ training:
   lr_scheduler_type: "linear"
   seed: 3407
   output_dir: "outputs"
+  logging_dir: "logs"

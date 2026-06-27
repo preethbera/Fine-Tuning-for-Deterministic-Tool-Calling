@@ -33,6 +33,7 @@ class TrainingConfig:
     lr_scheduler_type: str
     seed: int
     output_dir: str
+    logging_dir: str
 
 @dataclass
 class AppConfig:
@@ -61,6 +62,7 @@ def load_config(config_path: str) -> AppConfig:
             weight_decay=float(data['training']['weight_decay']),
             lr_scheduler_type=data['training']['lr_scheduler_type'],
             seed=data['training']['seed'],
-            output_dir=data['training']['output_dir']
+            output_dir=data['training']['output_dir'],
+            logging_dir=data['training'].get('logging_dir', 'logs')
         )
     )

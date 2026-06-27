@@ -6,10 +6,12 @@ from src.data_processing import prepare_dataset
 from src.model import initialize_model
 from src.trainer import setup_and_train
 from src.inference import generate_response, validate_structure
+from src.evaluation import run_evaluation
+import json
 
 def main():
     parser = argparse.ArgumentParser(description="Deterministic Agentic Tool Router Pipeline")
-    parser.add_argument('--phase', type=str, choices=['process', 'train', 'test', 'all'], default='all',
+    parser.add_argument('--phase', type=str, choices=['process', 'train', 'test', 'evaluate', 'all'], default='all',
                         help='Which phase of the pipeline to run')
     parser.add_argument('--config', type=str, default='configs/config.yaml',
                         help='Path to config yaml file')
@@ -81,6 +83,28 @@ def main():
         print("\n[Test Case 3: Missing parameter (ABORT scenario)]")
         response3 = generate_response(model, tokenizer, "What's the weather like?", mock_tools)
         validate_structure(response3)
+
+    # Evaluate Phase: Run deterministic loop on evaluation split
+    if args.phase in ['evaluate', 'all']:
+        print("\n=== Phase: Evaluate ===")
+        if model is None or tokenizer is None:
+            lora_path = os.path.join(config.training.output_dir, "lora_model")
+            if not os.path.exists(lora_path):
+                print(f"Error: Model not found at {lora_path}. Please train first.")
+                return
+                
+            from unsloth import FastLanguageModel
+            model, tokenizer = FastLanguageModel.from_pretrained(
+                model_name=lora_path, 
+                max_seq_length=config.model.max_seq_length,
+                dtype=None,
+                load_in_4bit=config.model.load_in_4bit,
+            )
+        
+        report = run_evaluation(model, tokenizer, config.data.dataset_name)
+        print("\n=== Evaluation Results ===")
+        print(json.dumps(report, indent=4))
+        print("Results saved to eval_results.json")
 
 if __name__ == "__main__":
     main()
