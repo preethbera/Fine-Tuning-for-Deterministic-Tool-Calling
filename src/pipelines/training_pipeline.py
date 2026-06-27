@@ -1,6 +1,18 @@
 import unsloth
 import os
 import math
+
+try:
+    from kaggle_secrets import UserSecretsClient
+    user_secrets = UserSecretsClient()
+    os.environ["WANDB_API_KEY"] = user_secrets.get_secret("WANDB_API_KEY")
+    os.environ["WANDB_PROJECT"] = "agentic-tool-router"
+    print("Successfully loaded WANDB_API_KEY from Kaggle secrets.")
+except ImportError:
+    print("Warning: kaggle_secrets not found. If running locally, ensure WANDB_API_KEY is set in environment.")
+except Exception as e:
+    print(f"Warning: Failed to load WANDB_API_KEY from Kaggle secrets: {e}")
+
 from datasets import load_from_disk
 from unsloth import is_bfloat16_supported
 from trl import SFTTrainer, SFTConfig
@@ -59,7 +71,8 @@ class TrainingPipeline:
                 lr_scheduler_type=self.config.training.lr_scheduler_type,
                 seed=self.config.training.seed,
                 output_dir=self.config.training.output_dir,
-                report_to="tensorboard"
+                report_to=self.config.training.report_to,
+                run_name=self.config.training.run_name
             ),
             callbacks=[DivergenceGuard()]
         )

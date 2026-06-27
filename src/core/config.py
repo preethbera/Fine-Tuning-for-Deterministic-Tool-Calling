@@ -33,6 +33,8 @@ class TrainingConfig(BaseModel):
     seed: int
     output_dir: str
     logging_dir: str
+    report_to: str = "tensorboard"
+    run_name: Optional[str] = None
 
 class AppConfig(BaseModel):
     model: ModelConfig

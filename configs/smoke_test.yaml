@@ -5,3 +5,4 @@ training:
   max_steps: 2
   logging_steps: 1
   save_steps: 2
+  report_to: "none"

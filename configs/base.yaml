@@ -35,3 +35,5 @@ training:
   seed: 3407
   output_dir: "outputs"
   logging_dir: "logs"
+  report_to: "wandb"
+  run_name: "qwen-coder-tool-router-v1"
