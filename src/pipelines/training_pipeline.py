@@ -3,15 +3,15 @@ import os
 import math
 from datasets import load_from_disk
 from unsloth import is_bfloat16_supported
-from trl import SFTTrainer
-from transformers import TrainingArguments, TrainerCallback, TrainerState, TrainerControl
+from trl import SFTTrainer, SFTConfig
+from transformers import TrainerCallback, TrainerState, TrainerControl
 from transformers.trainer_utils import get_last_checkpoint
 from src.core.config import AppConfig
 from src.models.router_agent import RouterAgent
 from src.core.exceptions import DivergenceException
 
 class DivergenceGuard(TrainerCallback):
-    def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, logs=None, **kwargs):
+    def on_log(self, args, state: TrainerState, control: TrainerControl, logs=None, **kwargs):
         if logs is not None and "loss" in logs:
             loss = logs["loss"]
             if math.isnan(loss) or math.isinf(loss):
@@ -40,11 +40,11 @@ class TrainingPipeline:
             model=model,
             processing_class=tokenizer,
             train_dataset=dataset,
-            dataset_text_field="text",
-            max_seq_length=self.config.model.max_seq_length,
-            dataset_num_proc=2,
-            packing=False,
-            args=TrainingArguments(
+            args=SFTConfig(
+                dataset_text_field="text",
+                max_seq_length=self.config.model.max_seq_length,
+                dataset_num_proc=2,
+                packing=False,
                 per_device_train_batch_size=self.config.training.per_device_train_batch_size,
                 gradient_accumulation_steps=self.config.training.gradient_accumulation_steps,
                 warmup_steps=self.config.training.warmup_steps,
