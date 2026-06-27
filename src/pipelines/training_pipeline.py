@@ -5,6 +5,7 @@ from datasets import load_from_disk
 from unsloth import is_bfloat16_supported
 from trl import SFTTrainer
 from transformers import TrainingArguments, TrainerCallback, TrainerState, TrainerControl
+from transformers.trainer_utils import get_last_checkpoint
 from src.core.config import AppConfig
 from src.models.router_agent import RouterAgent
 from src.core.exceptions import DivergenceException
@@ -63,8 +64,12 @@ class TrainingPipeline:
             callbacks=[DivergenceGuard()]
         )
         
+        last_checkpoint = None
+        if os.path.isdir(self.config.training.output_dir):
+            last_checkpoint = get_last_checkpoint(self.config.training.output_dir)
+            
         try:
-            trainer.train(resume_from_checkpoint=True)
+            trainer.train(resume_from_checkpoint=last_checkpoint)
         except DivergenceException as e:
             print(f"Training aborted safely: {e}")
             
