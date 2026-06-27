@@ -23,7 +23,8 @@ class TrainingConfig(BaseModel):
     per_device_train_batch_size: int
     gradient_accumulation_steps: int
     warmup_steps: int
-    max_steps: int
+    num_train_epochs: float = 1.0
+    max_steps: int = -1
     learning_rate: float
     logging_steps: int
     save_steps: int

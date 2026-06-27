@@ -13,6 +13,47 @@ class EvaluationPipeline:
         self.config = config
         self.parser = parser
         
+    def _is_dict_match(self, predicted, ground_truth):
+        """Recursively checks if two dictionaries match exactly in keys and values."""
+        if isinstance(predicted, dict) and isinstance(ground_truth, dict):
+            if set(predicted.keys()) != set(ground_truth.keys()):
+                return False
+            for k in predicted:
+                if not self._is_dict_match(predicted[k], ground_truth[k]):
+                    return False
+            return True
+        elif isinstance(predicted, list) and isinstance(ground_truth, list):
+            if len(predicted) != len(ground_truth):
+                return False
+            for p, g in zip(predicted, ground_truth):
+                if not self._is_dict_match(p, g):
+                    return False
+            return True
+        else:
+            return predicted == ground_truth
+            
+    def _is_type_match(self, predicted, ground_truth):
+        """Recursively checks if values in predicted match the types in ground_truth."""
+        if type(predicted) != type(ground_truth):
+            # Special case for numeric types that might be interchangeable in JSON
+            if isinstance(predicted, (int, float)) and isinstance(ground_truth, (int, float)):
+                pass
+            else:
+                return False
+                
+        if isinstance(predicted, dict) and isinstance(ground_truth, dict):
+            for k in predicted:
+                if k in ground_truth:
+                    if not self._is_type_match(predicted[k], ground_truth[k]):
+                        return False
+            return True
+        elif isinstance(predicted, list) and isinstance(ground_truth, list):
+            for p, g in zip(predicted, ground_truth):
+                if not self._is_type_match(p, g):
+                    return False
+            return True
+        return True
+
     def execute(self, num_samples: int = 100):
         agent = RouterAgent(self.config)
         lora_path = os.path.join(self.config.training.output_dir, "lora_model")
@@ -34,17 +75,17 @@ class EvaluationPipeline:
         
         metrics = {
             "total_samples": 0,
-            "format_adherence": 0,
-            "json_parse_success": 0,
-            "tool_selection_accuracy": 0,
-            "negative_trigger_success": 0,
+            "total_positive_cases": 0,
             "total_negative_cases": 0,
-            "total_positive_cases": 0
+            "ast_match_count": 0,
+            "type_fidelity_count": 0,
+            "negative_rejection_count": 0,
+            "hallucination_count": 0
         }
         
         from src.pipelines.data_pipeline import SYSTEM_PROMPT
         
-        for item in tqdm(dataset):
+        for item in tqdm(dataset, desc="Evaluating"):
             try:
                 record = self.parser.transform(item)
             except Exception:
@@ -92,43 +133,66 @@ class EvaluationPipeline:
             parsed = Validator.parse_generated_text(response)
             
             metrics["total_samples"] += 1
+            available_tool_names = [t.get("name") for t in tools_json] if isinstance(tools_json, list) else []
             
-            if parsed["has_thought"]:
-                if parsed["is_abort"] and not parsed["has_tool_call"]:
-                    metrics["format_adherence"] += 1
-                elif not parsed["is_abort"] and parsed["has_tool_call"]:
-                    metrics["format_adherence"] += 1
+            predicted_tools = []
+            if parsed["is_valid_json"] and parsed["parsed_json"]:
+                if isinstance(parsed["parsed_json"], list):
+                    predicted_tools = parsed["parsed_json"]
+                elif isinstance(parsed["parsed_json"], dict):
+                    predicted_tools = [parsed["parsed_json"]]
                     
+            predicted_tool_names = [pt.get("name") for pt in predicted_tools if isinstance(pt, dict)]
+            
+            for pt_name in predicted_tool_names:
+                if pt_name not in available_tool_names:
+                    metrics["hallucination_count"] += 1
+                    break
+
             if not answers_json:
                 metrics["total_negative_cases"] += 1
                 if parsed["is_abort"]:
-                    metrics["negative_trigger_success"] += 1
+                    metrics["negative_rejection_count"] += 1
             else:
                 metrics["total_positive_cases"] += 1
-                if parsed["has_tool_call"] and parsed["is_valid_json"]:
-                    metrics["json_parse_success"] += 1
+                
+                if parsed["is_valid_json"] and len(predicted_tools) > 0 and len(answers_json) > 0:
+                    pt = predicted_tools[0]
+                    gt = answers_json[0]
                     
-                    predicted_tools = []
-                    if isinstance(parsed["parsed_json"], list):
-                        predicted_tools = [t.get("name") for t in parsed["parsed_json"] if isinstance(t, dict)]
-                    elif isinstance(parsed["parsed_json"], dict):
-                        predicted_tools = [parsed["parsed_json"].get("name")]
-                    
-                    ground_truth_tools = [a.get("name") for a in answers_json] if isinstance(answers_json, list) else []
-                    
-                    if predicted_tools and ground_truth_tools and predicted_tools[0] == ground_truth_tools[0]:
-                        metrics["tool_selection_accuracy"] += 1
-                        
+                    if isinstance(pt, dict) and isinstance(gt, dict):
+                        if pt.get("name") == gt.get("name"):
+                            pt_args = pt.get("arguments", {})
+                            gt_args = gt.get("arguments", {})
+                            
+                            if isinstance(pt_args, str):
+                                try:
+                                    pt_args = json.loads(pt_args)
+                                except:
+                                    pt_args = {}
+                            if isinstance(gt_args, str):
+                                try:
+                                    gt_args = json.loads(gt_args)
+                                except:
+                                    gt_args = {}
+                                    
+                            if self._is_dict_match(pt_args, gt_args):
+                                metrics["ast_match_count"] += 1
+                                
+                            if set(pt_args.keys()) == set(gt_args.keys()):
+                                if self._is_type_match(pt_args, gt_args):
+                                    metrics["type_fidelity_count"] += 1
+
         report = {
             "total_samples": metrics["total_samples"],
-            "format_adherence_rate": metrics["format_adherence"] / max(1, metrics["total_samples"]),
-            "json_parse_success_rate": metrics["json_parse_success"] / max(1, metrics["total_positive_cases"]) if metrics["total_positive_cases"] > 0 else 0.0,
-            "tool_selection_accuracy": metrics["tool_selection_accuracy"] / max(1, metrics["total_positive_cases"]) if metrics["total_positive_cases"] > 0 else 0.0,
-            "negative_trigger_success_rate": metrics["negative_trigger_success"] / max(1, metrics["total_negative_cases"]) if metrics["total_negative_cases"] > 0 else 1.0,
+            "ast_match_rate": metrics["ast_match_count"] / max(1, metrics["total_positive_cases"]),
+            "argument_type_fidelity": metrics["type_fidelity_count"] / max(1, metrics["total_positive_cases"]),
+            "negative_rejection_accuracy": metrics["negative_rejection_count"] / max(1, metrics["total_negative_cases"]),
+            "hallucination_rate": metrics["hallucination_count"] / max(1, metrics["total_samples"])
         }
         
-        with open("eval_results.json", "w") as f:
+        with open("bfcl_evaluation_metrics.json", "w") as f:
             json.dump(report, f, indent=4)
             
-        print("Evaluation complete. Results saved to eval_results.json")
+        print("Evaluation complete. Results saved to bfcl_evaluation_metrics.json")
         return report

@@ -60,6 +60,7 @@ class TrainingPipeline:
                 per_device_train_batch_size=self.config.training.per_device_train_batch_size,
                 gradient_accumulation_steps=self.config.training.gradient_accumulation_steps,
                 warmup_steps=self.config.training.warmup_steps,
+                num_train_epochs=self.config.training.num_train_epochs,
                 max_steps=self.config.training.max_steps,
                 learning_rate=self.config.training.learning_rate,
                 fp16=not is_bfloat16_supported(),
