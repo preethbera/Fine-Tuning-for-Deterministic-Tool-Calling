@@ -1,9 +1,10 @@
+import unsloth
 import os
 import math
 from datasets import load_from_disk
+from unsloth import is_bfloat16_supported
 from trl import SFTTrainer
 from transformers import TrainingArguments, TrainerCallback, TrainerState, TrainerControl
-from unsloth import is_bfloat16_supported
 from src.core.config import AppConfig
 from src.models.router_agent import RouterAgent
 from src.core.exceptions import DivergenceException
@@ -35,7 +36,7 @@ class TrainingPipeline:
         
         trainer = SFTTrainer(
             model=model,
-            tokenizer=tokenizer,
+            processing_class=tokenizer,
             train_dataset=dataset,
             dataset_text_field="text",
             max_seq_length=self.config.model.max_seq_length,
