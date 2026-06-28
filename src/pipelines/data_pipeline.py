@@ -38,7 +38,14 @@ class DataPipeline:
         tools_str = json.dumps(tools_json, indent=2)
         user_message = f"Available tools:\n{tools_str}\n\nUser Query: {query}"
         
-        available_tool_names = [t.get("name", "unknown") for t in tools_json] if isinstance(tools_json, list) else []
+        available_tool_names = []
+        if isinstance(tools_json, list):
+            for t in tools_json:
+                if isinstance(t, dict):
+                    if "function" in t and isinstance(t["function"], dict):
+                        available_tool_names.append(t["function"].get("name", "unknown"))
+                    else:
+                        available_tool_names.append(t.get("name", "unknown"))
         tool_list_str = ", ".join(available_tool_names) if available_tool_names else "None"
         
         if not answers_json:

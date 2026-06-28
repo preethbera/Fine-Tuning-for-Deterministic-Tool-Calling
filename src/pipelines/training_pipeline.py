@@ -85,8 +85,9 @@ class TrainingPipeline:
                 print(f"Warning: Corrupted checkpoint found at {last_checkpoint} (missing trainer_state.json). Starting fresh.")
                 last_checkpoint = None
             
+        train_result = None
         try:
-            trainer.train(resume_from_checkpoint=last_checkpoint)
+            train_result = trainer.train(resume_from_checkpoint=last_checkpoint)
         except DivergenceException as e:
             print(f"Training aborted safely: {e}")
             
@@ -94,3 +95,4 @@ class TrainingPipeline:
         model.save_pretrained(save_path)
         tokenizer.save_pretrained(save_path)
         print(f"Training complete. Model saved to {save_path}")
+        return train_result

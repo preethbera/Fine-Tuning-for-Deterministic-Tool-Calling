@@ -160,7 +160,14 @@ class EvaluationPipeline:
                 parsed = Validator.parse_generated_text(response)
                 
                 metrics["total_samples"] += 1
-                available_tool_names = [t.get("name") for t in tools_json] if isinstance(tools_json, list) else []
+                available_tool_names = []
+                if isinstance(tools_json, list):
+                    for t in tools_json:
+                        if isinstance(t, dict):
+                            if "function" in t and isinstance(t["function"], dict):
+                                available_tool_names.append(t["function"].get("name"))
+                            else:
+                                available_tool_names.append(t.get("name"))
                 
                 predicted_tools = []
                 if parsed["is_valid_json"] and parsed["parsed_json"]:
