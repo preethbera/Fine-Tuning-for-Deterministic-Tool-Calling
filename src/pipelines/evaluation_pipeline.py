@@ -94,6 +94,7 @@ class EvaluationPipeline:
             "error_missing_param": 0,
             "error_type_mismatch": 0,
             "error_value_mismatch": 0,
+            "error_missing_tool": 0,
             
             # Performance
             "total_inference_latency_ms": 0,
@@ -287,6 +288,7 @@ class EvaluationPipeline:
             },
             "error_distribution": {
                 "syntax": metrics["error_syntax"],
+                "missing_tool": metrics["error_missing_tool"],
                 "hallucinated_tool": metrics["error_hallucinated_tool"],
                 "hallucinated_param": metrics["error_hallucinated_param"],
                 "missing_param": metrics["error_missing_param"],
