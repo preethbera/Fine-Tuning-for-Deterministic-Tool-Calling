@@ -161,7 +161,9 @@ class EvaluationPipeline:
                     gt = answers_json[0]
                     
                     if isinstance(pt, dict) and isinstance(gt, dict):
-                        if pt.get("name") == gt.get("name"):
+                        pt_name = str(pt.get("name", "")).strip()
+                        gt_name = str(gt.get("name", "")).strip()
+                        if pt_name and pt_name == gt_name:
                             pt_args = pt.get("arguments", {})
                             gt_args = gt.get("arguments", {})
                             

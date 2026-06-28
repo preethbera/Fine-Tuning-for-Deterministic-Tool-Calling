@@ -17,8 +17,21 @@ class Validator:
         is_valid_json = False
         parsed_json = None
         if has_tool_call:
+            raw_json = tool_match.group(1).strip()
+            
+            # Strip markdown formatting hallucinated by the model
+            if raw_json.startswith("```json"):
+                raw_json = raw_json[7:]
+            elif raw_json.startswith("```"):
+                raw_json = raw_json[3:]
+                
+            if raw_json.endswith("```"):
+                raw_json = raw_json[:-3]
+                
+            raw_json = raw_json.strip()
+            
             try:
-                parsed_json = json.loads(tool_match.group(1).strip())
+                parsed_json = json.loads(raw_json)
                 is_valid_json = True
             except json.JSONDecodeError:
                 pass
