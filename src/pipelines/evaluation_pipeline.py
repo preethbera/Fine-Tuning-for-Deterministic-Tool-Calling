@@ -1,6 +1,7 @@
 import os
 import json
 import torch
+import traceback
 from datasets import load_dataset
 from tqdm import tqdm
 from src.core.config import AppConfig
@@ -85,6 +86,8 @@ class EvaluationPipeline:
         
         from src.pipelines.data_pipeline import SYSTEM_PROMPT
         
+        debug_counter = 0
+        
         for item in tqdm(dataset, desc="Evaluating"):
             try:
                 record = self.parser.transform(item)
@@ -156,6 +159,8 @@ class EvaluationPipeline:
             else:
                 metrics["total_positive_cases"] += 1
                 
+                pt_args, gt_args, pt = None, None, None
+                
                 if parsed["is_valid_json"] and len(predicted_tools) > 0 and len(answers_json) > 0:
                     pt = predicted_tools[0]
                     gt = answers_json[0]
@@ -178,12 +183,30 @@ class EvaluationPipeline:
                                 except:
                                     gt_args = {}
                                     
-                            if self._is_dict_match(pt_args, gt_args):
-                                metrics["ast_match_count"] += 1
-                                
-                            if set(pt_args.keys()) == set(gt_args.keys()):
-                                if self._is_type_match(pt_args, gt_args):
-                                    metrics["type_fidelity_count"] += 1
+                            try:
+                                if self._is_dict_match(pt_args, gt_args):
+                                    metrics["ast_match_count"] += 1
+                                    
+                                if set(pt_args.keys()) == set(gt_args.keys()):
+                                    if self._is_type_match(pt_args, gt_args):
+                                        metrics["type_fidelity_count"] += 1
+                            except Exception as e:
+                                print(f"\nError during AST matching:")
+                                traceback.print_exc()
+
+                if debug_counter < 5:
+                    print("\n" + "="*50)
+                    print(f"Query: {query}")
+                    print(f"Ground Truth JSON: {answers_json}")
+                    print(f"Raw Model Response: {response}")
+                    print(f"Validator Output: {parsed}")
+                    print(f"Extracted Variables:")
+                    print(f" - predicted_tools: {predicted_tools}")
+                    print(f" - pt: {pt}")
+                    print(f" - pt_args: {pt_args}")
+                    print(f" - gt_args: {gt_args}")
+                    print("="*50 + "\n")
+                    debug_counter += 1
 
         report = {
             "total_samples": metrics["total_samples"],
