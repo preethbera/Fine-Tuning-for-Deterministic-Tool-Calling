@@ -1,8 +1,8 @@
 # Deterministic Agentic Tool Router
 
-![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
-![Unsloth](https://img.shields.io/badge/Powered_by-Unsloth-FF69B4.svg)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C.svg)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
+[![Unsloth](https://img.shields.io/badge/Powered_by-Unsloth-FF69B4.svg)](https://github.com/unslothai/unsloth)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C.svg)](https://pytorch.org/)
 
 A production-grade, highly modular Large Language Model (LLM) alignment repository specifically designed for **deterministic agentic tool routing**. This repository provides an end-to-end pipeline for dataset processing, parameter-efficient fine-tuning (QLoRA), and robust evaluation of open-source models for highly accurate function calling capabilities.
 
