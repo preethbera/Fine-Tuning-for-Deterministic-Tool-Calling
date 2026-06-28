@@ -3,11 +3,10 @@
 ![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![Unsloth](https://img.shields.io/badge/Powered_by-Unsloth-FF69B4.svg)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C.svg)
-![License](https://img.shields.io/badge/license-MIT-green)
 
 A production-grade, highly modular Large Language Model (LLM) alignment repository specifically designed for **deterministic agentic tool routing**. This repository provides an end-to-end pipeline for dataset processing, parameter-efficient fine-tuning (QLoRA), and robust evaluation of open-source models for highly accurate function calling capabilities.
 
-## 🌟 Key Features
+## Key Features
 
 - **End-to-End Pipeline**: Modular pipelines for data processing, training, and evaluation.
 - **Optimized QLoRA Fine-Tuning**: Leverages [Unsloth](https://unsloth.ai/) for 2x-5x faster training with minimal VRAM usage. It uses native `load_in_4bit=True` with NF4 quantization, Double Quantization, and paged optimizers (`paged_adamw_8bit`).
@@ -16,7 +15,7 @@ A production-grade, highly modular Large Language Model (LLM) alignment reposito
 - **Configuration Driven**: Easily manage experiments and hyperparameters using YAML configurations.
 - **Built-in Smoke Tests**: Validate dataset compatibility and model parsers before initiating long training runs.
 
-## 🏗️ Repository Structure
+## Repository Structure
 
 ```text
 .
@@ -29,11 +28,10 @@ A production-grade, highly modular Large Language Model (LLM) alignment reposito
 │   ├── models/               # RouterAgent (Unsloth wrapper) and Validator
 │   └── pipelines/            # Core logic (Data, Training, Evaluation pipelines)
 ├── main.py                   # Central CLI entry point
-├── pyproject.toml            # Project metadata and dependencies
-└── requirements.txt          # Python requirements
+└── pyproject.toml            # Project metadata and dependencies
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Prerequisites
 
@@ -46,9 +44,7 @@ Clone the repository and install the dependencies:
 ```bash
 git clone https://github.com/your-org/deterministic-tool-router.git
 cd deterministic-tool-router
-pip install -r requirements.txt
-# Or using pyproject.toml:
-# pip install -e .
+pip install -e .
 ```
 
 *Note: Unsloth installation can be environment-specific. Refer to the [official Unsloth installation guide](https://github.com/unslothai/unsloth) if you encounter issues.*
@@ -74,7 +70,7 @@ training:
   # ...
 ```
 
-## 🛠️ Usage
+## Usage
 
 The central entry point is `main.py`, which manages the execution phases.
 
@@ -110,7 +106,7 @@ You can execute specific phases of the pipeline sequentially:
    python main.py --phase evaluate
    ```
 
-## 📊 Evaluation & Metrics
+## Evaluation & Metrics
 
 The evaluation phase produces detailed metrics to ensure the determinism of your tool router. Reports are saved in `outputs/evaluation_reports/`.
 
@@ -121,23 +117,9 @@ The pipeline evaluates:
 
 Visualizations (Confusion Matrix and Error Breakdown charts) are automatically generated for easy analysis.
 
-## 🧠 QLoRA Implementation Details
+## QLoRA Implementation Details
 
 This repository implements a textbook QLoRA setup following standard best practices:
 - **NF4 Quantization**: Handled dynamically by Unsloth when `load_in_4bit=True`.
 - **Double Quantization**: Enabled automatically by Unsloth to reduce VRAM overhead of quantization constants.
 - **Paged Optimizers**: Explicitly configured using `paged_adamw_8bit` to offload optimizer states to CPU RAM during GPU memory spikes, preventing OOM errors.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
